@@ -1,7 +1,7 @@
 ## Notes In Deep Reinforcement Learning 
 ---
 
-### Concepts in Reinforcemnet Learning
+### Concepts in Reinforcement Learning
 1. The main goal of Reinforcement Learning is to maximum the `Total Reward`.
 2. `Total Reward` is the sum of all reward in `One Eposide`, so the model doesn't know which steps in this eposide are good and which are bad.
 3. Only few actions can get the positive reward (ex: fire and killing the enemy in Space War game gets positive reward but moving gets no reward), so how to let the model find these right actions is very important.
@@ -19,22 +19,20 @@
 The A3C method is the most popular model which combines policy-based method and value-based method, the structure is shown as below. To learn A3C model, we need to know the concepts of `policy-based` and `value-based`.
 
 <div align=center><img src="assets/A3C.png"></div>
-
-### Policy-based Approch - Learn an Actor (Policy Gradient Method)
-This approch try to learn a policy(also called actor). It accepts the observation as input, and output an action. The policy(actor) can be any model. If you use an Neural Network to as your actor, then you are doing Deep Reinforcemnet Learning.
+### Policy-based Approach - Learn an Actor (Policy Gradient Method)
+This approach try to learn a policy(also called actor). It accepts the observation as input, and output an action. The policy(actor) can be any model. If you use an Neural Network to as your actor, then you are doing Deep Reinforcement Learning.
 
 $$Input(Observation) \rightarrow Actor/Policy \rightarrow Output(Action)$$
 
-There are **three steps** to build DRL:<br>
+There are **three steps** to build DRL:
 ##### 1. Decide Function of Actor Model (NN? ...)
 
 Here we use the NN as our Actor, so:
 * The Input of this NN is the observation of machine represented as Vector or Matrix. (Ex: Image Pixels to Matrix)
-* The Output of this NN is Action `Probability`. The most important point is that we shouldn't always choose the action which has the highest probability, it should be a stochastic decisions according to the probability distrubution.
-* The Advantage of NN to Q-table is: we can't enumerate all observations (such as we can't list all pixels' combinations of a game) in some complex scenes, then we can use Neural Network to promise that we can always obtain an output even if this observation didn't apprear in the previous train set.
+* The Output of this NN is Action `Probability`. The most important point is that we shouldn't always choose the action which has the highest probability, it should be a stochastic decisions according to the probability distribution.
+* The Advantage of NN to Q-table is: we can't enumerate all observations (such as we can't list all pixels' combinations of a game) in some complex scenes, then we can use Neural Network to promise that we can always obtain an output even if this observation didn't appear in the previous train set.
 
 <div align=center><img src="assets/NN_ACtor.png"></div>
-
 ##### 2. Decide Goodness of this Function
 Since we use the Neural Network as our function model, we need to decide what is the goodness of this model (a standard to judge the performance of current model). We use $\overline{R(\theta)}$ to express this standard, which $\theta$ is the parameters of current model.
 
@@ -68,9 +66,11 @@ $$\theta^* = argmax_\theta\overline{R(\theta)} \rightarrow \overline{R(\theta)} 
   *  ...
 * The $\theta$ includes the parameters in the current Neural Network, $\theta = $ {$w_1, w_2, w_3, ..., b_1, b_2, b_3, ...$}, which the $\bigtriangledown R(\theta) = \left[ \begin{matrix} \frac{\partial{R(\theta)}}{\partial{w_1}} \\ \frac{\partial{R(\theta)}}{\partial{w_2}} \\ ... \\ \frac{\partial{R(\theta)}}{\partial{b_1}} \\ \frac{\partial{R(\theta)}}{\partial{b_2}} \\ ... \end{matrix} \right]$.
   
+
 It's time to calculate the gradient of $R(\theta) = \sum_{\tau}P(\tau|\theta)R(\tau)$, since $R(\tau)$ has nothing to do with $\theta$, the gradient can be expressed as:
 
-$$\bigtriangledown{R(\theta)} = \sum_\tau{R(\tau)\bigtriangledown{P(\tau|\theta)}} = \sum_\tau{R(\tau)P(\tau|\theta)\frac{\bigtriangledown{P(\tau|\theta)}}{P(\tau|\theta)}} = \sum_\tau{R(\tau)P(\tau|\theta)\bigtriangledown{logP(\tau|\theta)}}$$.
+$$\bigtriangledown{R(\theta)} = \sum_\tau{R(\tau)\bigtriangledown{P(\tau|\theta)}} = \sum_\tau{R(\tau)P(\tau|\theta)\frac{\bigtriangledown{P(\tau|\theta)}}{P(\tau|\theta)}} = \sum_\tau{R(\tau)P(\tau|\theta)\bigtriangledown{logP(\tau|\theta)}}$$
+
 `Note`: $\frac{dlog(f(x))}{dx} = \frac{1}{f(x)}\frac{df(x)}{dx}$<br>
 
 Use $\theta$ policy play the game N times, obtain {$\tau_1, \tau_2, \tau_3, ...$}:
@@ -107,11 +107,9 @@ $$\bigtriangledown\overline{R(\theta)} = \frac{1}{N}\sum_{n=1}^N\sum_{t=1}^T{(R(
 Use the total reward $R(\tau)$ to tune the all actions' probability in this eposide also has some disadvantage, show as below:
 
 <div align=center><img src="assets/assign_suitable_weight.png"></div>
-
 The left picture show one eposide whose total reward R is 5, so the probabilities of all actions in this eposide will be increased (such as x5), but the main positive reward obtained from the $a_1$, while $a_2$ and $a_3$ didn't give any positive reward, but the probability of $a_2$ and $a_3$ also be increased in this example. Same as right picture, $a_1$ is a bad action, but $a_2$ may not be a bad action, so probability of $a_2$ shouldn't be decreased.
 
 <div align=center><img src="assets/assign_suitable_weight_2.png"></div>
-
 To avoid this problem, we assign different $R$ to each $a_t$, the $R$ is the cumulation of $r_t$ which is the sum of all rewards obtained after $a_t$, now the equation becomes:
 
 $$\bigtriangledown\overline{R(\theta)} = \frac{1}{N}\sum_{n=1}^N\sum_{t=1}^T{(\sum_{t'=t}^T{\gamma^{t' -t}r_{t'}^n} - b)\bigtriangledown{logP(a_t^n|s_t^n, \theta)}}$$
@@ -154,8 +152,8 @@ Here defines:
 
 $$J^{\theta'}(\theta) = E_{(s_t, a_t)\sim{\pi_{\theta'}}}[\frac{P_\theta(a_t|s_t)}{P_{\theta'}(a_t|s_t)}A^{\theta'}(s_t, a_t)]$$
 
-`Note`: Since we use $\theta'$ to sample data for $\theta$, the distribution of $\theta$ can't be very different from $\theta'$, how to determine the difference between two distrubution and end the model training if $\theta'$ is distinct from $\theta$? Now let's start to learn PPO Algorithim.
+`Note`: Since we use $\theta'$ to sample data for $\theta$, the distribution of $\theta$ can't be very different from $\theta'$, how to determine the difference between two distribution and end the model training if $\theta'$ is distinct from $\theta$? Now let's start to learn PPO Algorithm. 
 
-### Value-based Approch - Learn an Critic
+### Value-based Approach - Learn an Critic
 
 A critic doesn't choose an action (*it's different from actor*), it `evaluates the performance` of a given actor. So an actor can be found from a critic.
