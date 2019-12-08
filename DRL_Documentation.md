@@ -19,7 +19,6 @@
 The A3C method is the most popular model which combines policy-based method and value-based method, the structure is shown as below. To learn A3C model, we need to know the concepts of `policy-based` and `value-based`.
 
 <div align=center><img src="assets/A3C.png" width=400></div>
-
 ### Policy-based Approach - Learn an Actor (Policy Gradient Method)
 This approach try to learn a policy(also called actor). It accepts the observation as input, and output an action. The policy(actor) can be any model. If you $use$ an Neural Network to as your actor, then you are doing Deep Reinforcement Learning.
 
@@ -190,6 +189,31 @@ $$
 
 `Note`: Since we use $\theta'$ to sample data for $\theta$, the distribution of $\theta$ can't be very different from $\theta'$, how to determine the difference between two distribution and end the model training if $\theta'$ is distinct from $\theta$? Now let's start to learn PPO Algorithm. 
 
+#### PPO Algorithm —— Proximal Policy Optimization
+
+PPO is the resolution of above question, it can avoid the problem which raised from  the difference between $\theta$ and $\theta'$ .  The target function shows as below:
+$$
+J_{PPO}^{\theta'}(\theta) = J^{\theta'}(\theta) - \beta KL(\theta, \theta')
+$$
+which the $KL(\theta, \theta')$ is the divergence of output action from policy $\theta$ and policy $\theta'$. The algorithm flow is:
+
+* Initial Policy parameters $\theta$
+
+* In each iteration:
+
+  * Using  $\theta^k$ to interact with the environment, and collect {${s_t, a_t}$} to calculate the $A^{\theta^k}(s_t, a_t)$
+*  Update the $J_{PPO}^{\theta'}(\theta)$ **several** times:  $ J_{PPO}^{\theta^k}(\theta) = J^{\theta^k}(\theta) - \beta KL(\theta, \theta^k)$
+  *  If $KL(\theta, \theta^k) > KL_{max}$, that means KL part takes too big importance of this equation, increase $\beta$
+  *  If $KL(\theta, \theta^k) < KL_{min}$, that means KL part takes lower importance of this equation, decrease $\beta$
+
+  
+
 ### Value-based Approach - Learn an Critic
 
 A critic doesn't choose an action (*it's different from actor*), it `evaluates the performance` of a given actor. So an actor can be found from a critic.
+
+#### Q-learning
+
+Q-Learning is a classical value-based method, it evaluates the score of an observation under an actor $\pi$, this function is called `state value function` $V^\pi(s)$. The score is calculated as the total reward from current observation to the end of this eposide.
+
+<img src="assets/Q_learning.png" height = 130>
