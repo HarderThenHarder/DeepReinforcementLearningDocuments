@@ -18,7 +18,8 @@
 ### A3C Method - Asynchronous Advantage Actor-Critic
 The A3C method is the most popular model which combines policy-based method and value-based method, the structure is shown as below. To learn A3C model, we need to know the concepts of `policy-based` and `value-based`.
 
-<div align=center><img src="assets/A3C.png"></div>
+<div align=center><img src="assets/A3C.png" width=400></div>
+
 ### Policy-based Approach - Learn an Actor (Policy Gradient Method)
 This approach try to learn a policy(also called actor). It accepts the observation as input, and output an action. The policy(actor) can be any model. If you $use$ an Neural Network to as your actor, then you are doing Deep Reinforcement Learning.
 
@@ -115,7 +116,7 @@ The meaning of this equation is very clear:
 * if $R(\tau^n)$ is positive $\rightarrow$ tune $\theta$ to increase the $P(a_t^n|s_t^n)$.
 * if $R(\tau^n)$ is negative $\rightarrow$ tune $\theta$ to decrease the $P(a_t^n|s_t^n)$
 
-Use this method can resolve the [Reward Delay Problem](#RewardDelay) in **Difficulties in RL** chapter, because here we use the `cumulative reward` of one entire eposide $R(\tau^n)$, not just the immediate reward after taking one action.
+Use this method can resolve the [Reward Delay Problem](#Difficulties in RL) in **Difficulties in RL** chapter, because here we use the `cumulative reward` of one entire eposide $R(\tau^n)$, not just the immediate reward after taking one action.
 
 *Add a Baseline - b*<br>
 To avoid all of $R(\tau^n)$ is positive (*there should be some negative reward to tell model don't take this action at this state*), we can add a baseline. So the equation changes to:
