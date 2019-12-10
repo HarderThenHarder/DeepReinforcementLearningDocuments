@@ -3,7 +3,7 @@
 
 ### Concepts in Reinforcement Learning
 1. The main goal of Reinforcement Learning is to maximum the `Total Reward`.
-2. `Total Reward` is the sum of all reward in `One Eposide`, so the model doesn't know which steps in this eposide are good and which are bad.
+2. `Total Reward` is the sum of all reward in `One Eposide`, so the model doesn't know which steps in this episode are good and which are bad.
 3. Only few actions can get the positive reward (ex: fire and killing the enemy in Space War game gets positive reward but moving gets no reward), so how to let the model find these right actions is very important.
 
 
@@ -40,14 +40,14 @@ Since we use the Neural Network as our function model, we need to decide what is
 
 * Given an actor $\pi_\theta(t)$ with Network-Parameters $\theta$, $t$ is the observation (input).
 * Use the actor $\pi_\theta(t)$ to play the video game until this game finished.
-* Sum all rewards in this eposide and marked as $R(\theta) \rightarrow R(\theta) = \sum_{t=1}^Tr_t$.
+* Sum all rewards in this episode and marked as $R(\theta) \rightarrow R(\theta) = \sum_{t=1}^Tr_t$.
 `Note`: $R(\theta)$ is a variable, cause even if we use the same actor $\pi_\theta(t)$ to play the same game many times, we can get the different $R(\theta)$ (*random mechanism in game and action chosen*). So we want to maximum the $\overline{R(\theta)}$ which expresses the expect of $R(\theta)$.
 * Use the $\overline{R(\theta)}$ to expresses the goodness of $\pi_\theta(t)$.
 
 *How to Calculate the $R(\theta)$?*
 
-* An eposide is considered as a trajectory $\tau$
-  * $\tau$ = {$s_1, a_1, r_1, s_2, a_2, r_2, ..., s_T, a_T, r_T$} $\rightarrow$ *all the history in this eposide*
+* An episode is considered as a trajectory $\tau$
+  * $\tau$ = {$s_1, a_1, r_1, s_2, a_2, r_2, ..., s_T, a_T, r_T$} $\rightarrow$ *all the history in this episode*
   * $R(\tau) = \sum_{t=1}^Tr_t$
 
 * Different $\tau$ has different probability to appear, the probability of $\tau$ is depending on the parameter $\theta$ of actor $\pi_\theta(t)$. So we define the probability of $\tau$ as $P(\tau|\theta)$.
@@ -90,7 +90,7 @@ $$
 
 *How to Calculate the $\bigtriangledown{logP(\tau|\theta)}$?*
 
-Since $\tau$ is the history of one eposide, so: 
+Since $\tau$ is the history of one episode, so: 
 $$
 \begin{align*}
 P(\tau|\theta) &= P(s_1)P(a_1|s_1, \theta)P(r_1, s_2|s_1, a_1)P(a_2|s_2, \theta)... \\
@@ -115,7 +115,7 @@ The meaning of this equation is very clear:
 * if $R(\tau^n)$ is positive $\rightarrow$ tune $\theta$ to increase the $P(a_t^n|s_t^n)$.
 * if $R(\tau^n)$ is negative $\rightarrow$ tune $\theta$ to decrease the $P(a_t^n|s_t^n)$
 
-Use this method can resolve the [Reward Delay Problem](#Difficulties in RL) in **Difficulties in RL** chapter, because here we use the `cumulative reward` of one entire eposide $R(\tau^n)$, not just the immediate reward after taking one action.
+Use this method can resolve the [Reward Delay Problem](#Difficulties in RL) in **Difficulties in RL** chapter, because here we use the `cumulative reward` of one entire episode $R(\tau^n)$, not just the immediate reward after taking one action.
 
 *Add a Baseline - b*<br>
 To avoid all of $R(\tau^n)$ is positive (*there should be some negative reward to tell model don't take this action at this state*), we can add a baseline. So the equation changes to:
@@ -125,10 +125,10 @@ $$
 
 *Assign Suitable Weight of each Action*<br>
 
-Use the total reward $R(\tau)$ to tune the all actions' probability in this eposide also has some disadvantage, show as below:
+Use the total reward $R(\tau)$ to tune the all actions' probability in this episode also has some disadvantage, show as below:
 
 <div align=center><img src="assets/assign_suitable_weight.png"></div>
-The left picture show one eposide whose total reward R is 5, so the probabilities of all actions in this eposide will be increased (such as x5), but the main positive reward obtained from the $a_1$, while $a_2$ and $a_3$ didn't give any positive reward, but the probability of $a_2$ and $a_3$ also be increased in this example. Same as right picture, $a_1$ is a bad action, but $a_2$ may not be a bad action, so probability of $a_2$ shouldn't be decreased.
+The left picture show one episode whose total reward R is 5, so the probabilities of all actions in this episode will be increased (such as x5), but the main positive reward obtained from the $a_1$, while $a_2$ and $a_3$ didn't give any positive reward, but the probability of $a_2$ and $a_3$ also be increased in this example. Same as right picture, $a_1$ is a bad action, but $a_2$ may not be a bad action, so probability of $a_2$ shouldn't be decreased.
 
 <div align=center><img src="assets/assign_suitable_weight_2.png"></div>
 To avoid this problem, we assign different $R$ to each $a_t$, the $R$ is the cumulation of $r_t$ which is the sum of all rewards obtained after $a_t$, now the equation becomes:
@@ -214,6 +214,79 @@ A critic doesn't choose an action (*it's different from actor*), it `evaluates t
 
 #### Q-learning
 
-Q-Learning is a classical value-based method, it evaluates the score of an observation under an actor $\pi$, this function is called `state value function` $V^\pi(s)$. The score is calculated as the total reward from current observation to the end of this eposide.
+Q-Learning is a classical value-based method, it evaluates the score of an observation under an actor $\pi$, this function is called `state value function` $V^\pi(s)$. The score is calculated as the total reward from current observation to the end of this episode.
 
 <img src="assets/Q_learning.png" height = 130>
+
+**How to estimate $V^\pi(s)$?**
+
+We know we need to calculate the total reward to express the performance of current actor $\pi_\theta$, but how to get this value?
+
+* Monte-Carlo based approach
+
+In the current state $S_a$ (observation), until the end of this episode, the cumulated reward is $G_a$; In the current state $S_b$ (observation), until the end of this episode, the cumulated reward is $G_b$. That means we can estimate the value of an observation $s_a$ under an actor $\pi_ \theta$, the low value could be explain as two possibilities: 
+
+a) the current observation is bad, even if a good actor can not get a high value. 
+
+b) the actor has a bad performance.
+
+In many cases, we can't enumerate all observations to calculate the all rewards $G_i$. The resolution is using a Neural-Network to fit the function from observation to value $G$.
+
+<img src="assets/DQN.png">
+
+Fit the NN with $(S_a, G(a))$, try to minimize the difference between the NN output $V_\pi(S_a)$ and Monte-Carlo reward $G(a)$.
+
+* Temporal-Difference approach
+
+MC approach is worked, but the problem is you must get the total reward in the end of one episode. It may be a very long way to reach the end state in some cases, Temporal-Difference approach could address this problem.
+
+<img src="assets/TD.png">
+
+here is a trajectory {$..., s_t, a_t, r_t, s_{t+1}, ...$ }, there should be:
+
+$$
+V^\pi(s_t) = V^\pi(s_{t+1}) + r_t
+$$
+
+so we can fit the NN by minimize the difference between $V^\pi(s_t) - V^\pi(s_{t+1})$ and $r_t$.
+
+Here is a tip in practice: we are training the same model $V^\pi$, so the two outputs $V_\pi(s_t)$ and $V_\pi(s_{t+1})$ are all generate from one parameter group $\theta$. When we update the $\theta$ after one iteration, both $V_\pi(s_t)$ and $V_\pi(s_{t+1})$ are changed in next iteration, which makes the model unstable.
+
+The tip is: fix the parameter group $\theta'$ to generate the $V_\pi(S_{t+1})$, and update the $\theta$ for $V_\pi(S_t)$. After N iterations, let the $\theta'$ equal to $\theta$. Fixed parameter Network (right) is called Target Network.
+
+<img src="assets/TD_fixed.png">
+
+* MC v.s. TD
+  * Monte-Carlo has larger `variance`. This is caused by the randomness of $G(a)$, since $G(a)$ is the sum of all reward $r_t$, each $r_t$ is a random variable, the sum of these variable must have a larger variance. Playing N times of one game with the same policy, the reward set {$G(a), G(b), G(c), ...$} has a large variance.
+  * Temporal-Difference also has a problem, which is $V^\pi(s_{t+1})$ may estimate `incorrectly` (cause it's not like Monte-Carlo approach to cumulative the reward until the end of this episode), so even the $r_t$ is correct, the $V^\pi(s_t) - V^\pi(s_{t+1})$ may not correct.
+  
+  In the practice, people prefer to use TD method.
+  
+* Q-value approach $\rightarrow$ $Q^\pi(s, a)$
+
+In current state (observation), enumerate all valid actions and calculate the Q-value of each action.
+
+<img src="assets/Q_function.png">
+
+`note`: In current state we force the actor to take the specific action to calculate the value this action, but random choose actions according to the $\pi_\theta$ actor in next steps until the end of episode.
+
+**Use Q-value to learn an actor**
+
+We can learn an actor $\pi$ with the Q-value function, here is the algorithm flow:
+
+<img src="assets/Q_learning_actor.png">
+
+the question is: how to estimate the $\pi'$ is better than $\pi$?
+
+If $\pi'$ is better than $\pi$, then:
+
+$$
+V^{\pi'}(s_i) \geqslant V^{\pi}(s_i), \qquad \forall s_i \in S
+$$
+
+We can use equation below to calculate the $\pi'$ from $\pi$:
+$$
+\pi'(s) = argmax_aQ^\pi(s, a)
+$$
+`Note`: This approach not suitable for continuous action, only for **discrete action**.
+
