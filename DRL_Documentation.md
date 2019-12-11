@@ -15,8 +15,8 @@
    * How to explore the world (`observation`) as more as possible.
    * How to explore the `action-combination` as more as possible.
 
-### A3C Method - Asynchronous Advantage Actor-Critic
-The A3C method is the most popular model which combines policy-based method and value-based method, the structure is shown as below. To learn A3C model, we need to know the concepts of `policy-based` and `value-based`.
+### A3C Method Brief Introduction 
+The A3C method is the most popular model which combines policy-based method and value-based method, the structure is shown as below. To learn A3C model, we need to know the concepts of `policy-based` and `value-based`. The details of A3C are shown [here](#A3C Method - Asynchronous Advantage Actor-Critic).
 
 <div align=center><img src="assets/A3C.png" width=400></div>
 ### Policy-based Approach - Learn an Actor (Policy Gradient Method)
@@ -290,3 +290,107 @@ $$
 $$
 `Note`: This approach not suitable for continuous action, only for **discrete action**.
 
+But if we always choose the best action according to the $Q^\pi$, some other better actions we can never detect. So we infer use `Exploration` method when we choose action to do.
+
+<u>Epsilon Greedy</u>
+
+Set a probability $\varepsilon$, take max Q-value action or take random action show as below. Typically , $\varepsilon$ decreases as time goes by.
+$$
+a = \left\{ \begin{align}
+argmaxQ(s, a)&, \quad \mbox{with probability 1 - }\varepsilon \\
+random&, \quad \mbox{with probability }\varepsilon
+\end{align}
+\right.
+$$
+
+
+<u>Boltzmann Exploration</u>
+
+Since the $Q^\pi$is an Neural Network, the output of this Network is the probability of each action. Use this probability to decide which action should take, show as below:
+$$
+P(a_i|s) = \frac{exp(Q(s, a_i))}{\sum_aexp(Q(s, a))}
+$$
+Q-value may be negative, so we take exp-function to let them be positive.
+
+**Replay Buffer**
+
+Replay buffer is a buffer which stores a lot of *experience* data. When you train your Q-Network, random choose a batch from buffer to fit it. 
+
+* An experience is a set which looks like {$s_t, a_t, r_t, s_{t+1}$}.
+* The experience in buffer may comes from different policy {$\pi_{\theta_1}, \pi_{\theta_2}, \pi_{\theta_3}, ...$}.
+
+* Drop the old experience when buffer is full.
+
+<img src="assets/replay_buffer.png">
+
+**Typical Q-Learning Algorithm**
+
+Here is the main algorithm flow of Q-learning:
+
+* Initialize Q-function Q, Initialize target Q-function $\hat{Q} = Q$
+* in each episode
+  * for each step t
+    * Given state $s_t$, take an action $a_t$ based on Q ($\varepsilon$-greedy exploration)
+    * Obtain the reward $r_t$ and next state $s_{t+1}$
+    * Store this experience {$s_t, a_t, r_t, s_{t+1}$} into the replay buffer
+    * Sample a batch of experience {$(s_i, a_i, r_i, s_{i+1}), (s_j, a_j, r_j, s_{j+1}), ...$} from buffer
+    * Compute target $y = r_i + max_a\hat{Q}(s_{i+1}, a_)$
+    * Update the parameters in $Q$ to make $Q(s_i, a_i)$ close to $y$.
+    * After N steps set $\hat{Q} = Q$
+
+<br>
+
+#### Double DQN
+
+Double DQN is designed to solve the problem of DQN. Problem of DQN show as below:
+
+<img src="assets/DQN_problem.jpg">
+
+Q-value are always over estimate in DQN training (Orange curve is DQN Neural Network output reward, Blue curve is Double DQN Neural Network output reward;  Orange line is the real cumulative reward of DQN, Blue line is the real cumulative reward of Double DQN).  Notes that Blue lines are over than Orange lines which means Double DQN has a greater true value than DQN.
+
+**Why DQN always over-estimate Q-value?**
+
+This because when we calculate the target $y$ which equals $r_t + max_aQ_\pi(s_{t+1}, a)$, we always choose the best action and compute the highest Q-value. This may over-estimate the target value, so the real cumulative reward may lower than that target value. While Q function is try to close the target value, this results the output of Q-Network is higher than the actual cumulative reward.
+$$
+Q(s_t, a_t) \qquad \Longleftrightarrow \qquad r_t + max_aQ(s_{t+1}, a)
+$$
+**Double DQN resolution**
+
+To avoid above problem, we use two Q-Network in training, one is in charge of choose the best action and the other is to estimate Q-value.
+$$
+Q(s_t, a_t) \qquad \Longleftrightarrow \qquad r_t + Q'(s_{t+1}, argmax_aQ(s_{t+1}, a))
+$$
+Here use $Q$ to select the best action in each state but use $Q'$ to estimate the Q-value of this action. This method has two advantages:
+
+* If $Q$ over-estimate the Q-value of action $a$, although this action is selected, the final Q-value of this action won't be over estimated (because we use $Q'$ to estimate the Q-value of this action). 
+* If $Q'$ over-estimate one action $a$, it's also safe. Because the $Q$ policy won't select the action $a$ (because $a$ is not the best action in Policy $Q$). 
+
+In DQN algorithm, we already have two Network: `origin Network` $\theta$ and `target Network` $\theta'$ (need to be fixed). So here use `origin Network` $\theta $ to select the action, and `target Network` $\theta' $ to estimate the Q-value.
+
+<br>
+
+#### Other Advanced Structure of Q-Learning
+
+* Dueling DQN
+
+Change the output as two parts:  $Q^\pi(s_t, a_t) = V(s_t) + A(s_t, a_t)$, which means the final Q-value is the sum of environment value and action value.
+
+* Prioritized Replay
+
+When we sample a batch of experience from replay buffer, we don't use random select. Prioritized Replay marked those experience which has a high loss after one iteration, and increase the probability of selecting those experience in the next batch.
+
+* Multi-Step
+
+Change the experience format in the Replay Buffer, not only store one step {$ s_t, a_t, r_t, s_{t+1} $}, store N steps { $s_t, a_t, r_t, s_{t+1}, ..., s_{t+N}, a_{t+N}, r_{t+N}, s_{t+N+1}$ }.
+
+* Noise Net
+
+This method used to explore more action. Add some noise in current Network $Q$ at the beginning of one episode.
+
+Here is the comparison of different algorithms:
+
+<img src="assets/rainbow.png" width=500>
+
+<br>
+
+### A3C Method - Asynchronous Advantage Actor-Critic
