@@ -1,4 +1,4 @@
-## Notes In Deep Reinforcement Learning 
+# Notes In Deep Reinforcement Learning 
 ---
 
 ### Concepts in Reinforcement Learning
@@ -389,8 +389,107 @@ This method used to explore more action. Add some noise in current Network $Q$ a
 
 Here is the comparison of different algorithms:
 
-<img src="assets/rainbow.png" width=500>
+<img src="assets/rainbow.png" width=400>
 
 <br>
 
 ### A3C Method - Asynchronous Advantage Actor-Critic
+
+Why we need A3C method? This is designed to solve the variance problem of Policy Gradient. In Policy Gradient method, even in the same state $ s_t $ and take the same action $ a_t $ N times, we may get very different result total reward $G$. This because randomness existed when we calculate the cumulative reward in below equation:
+$$
+\bigtriangledown\overline{R(\theta)} = \frac{1}{N}\sum_{n=1}^N\sum_{t=1}^T{(\sum_{t'=t}^T{\gamma^{t' -t}r_{t'}^n} - b)\bigtriangledown{logP(a_t^n|s_t^n, \theta)}}
+$$
+This part $ (\sum_{t'=t}^T{\gamma^{t' -t}r_{t'}^n} - b) $ could be very different for $ r_t $ is a random variable with big variance, the result may be like this:
+
+<img src="assets/gradient_ascend_problem.png">
+
+unless we sample enough times to cover all possible rewards, the model could be stable —— but it's hard to do this. If we can replace  $\sum_{t'=t}^T{\gamma^{t' -t}r_{t'}^n}$ with the expect $E(r_{t'}^n)$, then we can solve this problem.<br>
+
+#### Advantage Actor-Critic (A2C Method)
+
+We have already introduced value-based method, the definition of $Q^{\pi_\theta}(s_t, a_t)$ is the expect of total reward of taking action $a_t$ at current state $s_t$. The definition of  $ V^{\pi_\theta}(s_t) $ is the expect reward of current state $s_t$ (just the state value without specific which action should take). Now we change the equation:
+$$
+\bigtriangledown\overline{R(\theta)} = \frac{1}{N}\sum_{n=1}^N\sum_{t=1}^T{(Q^{\pi_\theta}(s_t^n, a_t^n) - V^{\pi_\theta}(s_t^n))\bigtriangledown{logP(a_t^n|s_t^n, \theta)}}
+$$
+`note`: Here we use state value to replace the baseline b.
+
+We can infer the value of $Q^{\pi_\theta}(s_t, a_t)$ from $V^{\pi_\theta}(s_t)$ :
+$$
+Q^{\pi}(s_t, a_t) \quad = \quad E[r_t + V^\pi(s_{t+1})] \quad \rightarrow \quad r_t + V^\pi(s_{t+1})
+$$
+We should use the expect because $r_t$ is a random variable, but it's hard to calculate, so we take off the expect. Now the equation becomes:
+$$
+\bigtriangledown\overline{R(\theta)} = \frac{1}{N}\sum_{n=1}^N\sum_{t=1}^T{(r_t + V^{\pi_\theta}(s_{t+1}^n) - V^{\pi_\theta}(s_t^n))\bigtriangledown{logP_{\theta}(a_t^n|s_t^n)}}
+$$
+Algorithm flow of Advantage Actor-Critic method show as below:
+
+<img src="assets/advanced_actor_critic.png">
+
+**Tips**
+
+1. There are two Networks to train in this algorithm:  Actor $ \pi_\theta $ and Critic $V^\pi(s)$. But two networks accept the same input $s$, only different in output —— scaler $V(s)$ for Critic Network and Probability Distribution $P(a|s)$ for Actor Network. So two networks can share some layers in the front of structure, looks like this: 
+
+<img src="assets/a3c_tips1.png">
+
+2. Use output entropy as regularization for $\pi(s)$, this could make the probability of each action more even so that the model can do more exploration.
+
+#### Asynchronous Advantage Actor-Critic (A3C Method)
+
+A3C is designed to speed up A2C. It maintain one global Network and create N workers, each worker interact with different environment, calculate the gradient and update the global Network.
+
+<img src="assets/A3C_Structure.png">
+
+* Copy global parameters $\theta_1$
+* Sampling some data
+* Compute gradients
+* Update global model
+
+`note`: All workers are parallelized, which means when $\bigtriangledown{\theta_1}$ finish compute and send back to global model, $\theta$ may changed (updated by other worker, so it may not remain $\theta_1 $). But we still use the $\bigtriangledown{\theta_1}$ to update the current parameters $\theta$ $\rightarrow$ $\theta + \eta\bigtriangledown{\theta_1}$.
+
+### Sparse Reward
+
+In reinforcement learning, reward is very important for agent to know which actions are good. But only few action could obtain a positive reward (ex. only fire and destroy the enemy could obtain a positive reward in Spaceship game), most of actions have no reward (ex. move left or move right). This phenomenon is called Sparse Reward.
+
+#### Reward Shaping
+
+Typically, few state could get the positive reward in training, thus we can create some extra rewards to guide the agent do some action in current state. For example, if we want to train an plane agent to destroy the enemy plane, the actual reward should be obtained from "fire and destroy the enemy". But in the start of the game, our plane don't know how to find enemy, so we can create an extra positive reward if our plane is fly toward enemy plane. 
+
+`note`: This method needs domain knowledge to design which rules desire positive reward and how much reward should be assigned.
+
+#### Curriculum Learning
+
+Typically, a hard task could be split into many simple tasks. Curriculum Learning Algorithm is starting from simple training examples, and then becoming harder and harder.
+
+The most common technique is **Reverse Curriculum Learning**, explain as below:
+
+* Given a goal state $s_g$.
+* Sample some states {$s_1, s_2, ...$} close to $s_g $.
+* Each state has a reward to goal state $s_g$, compute {$R(s_1), R(s_2), ...$}.
+* Delete those state whose reward is too large (it's too easy from this state to goal state) or too small (it's too difficult from this state to goal state).
+* Sample more states near the {$s_1, s_2, ... $}.
+
+<img src="assets/reverse_curriculum_learning.png">
+
+#### Hierarchical Reinforcement Learning
+
+A entire model could be split into different hierarchies, top-level model only give the top-level order and low-level model choose the actual actions. For example, if we wanna train a plane agent, top-level model only give the way point of next target while the low-level model control the plane to fly to that target (turn left or turn right).
+
+<img src="assets/hierarchical_rl.jpg" width=600>
+
+Here is a game example, blue point is the agent which is asked to reach the yellow point. Pink point is the temporary target given by high-level model while the low-level mode follow this instruction and control the agent to reach pink point.
+
+#### ICM —— Intrinsic Curiosity Module
+
+ICM Algorithm can let model to do more exploration. It adds an extra Reward function $r^i_t$ which accept three parameters $(s_t, a_t, s_{t+1})$. The Network need to maximize the sum value $\sum_{t=1}^N(r^i_t + r_t)$.
+
+<img src="assets/ICM.png">
+
+Now let's see how ICM calculate reward $r^i_t$ in each step $t$ :
+
+<img src="assets/ICM_Structure.png">
+
+Here are two Networks in ICM module:
+
+* Network 1: This Network is used to predict the next state $s_{t+1}$ after taking action $a$, if $s_{t+1}$ is hard to predict, then the reward $r^i$ is high.
+* Network 2: There may be a lot of features are not related to do actions (ex. the position of sun in the Spaceship War game). If we just maximize the reward of state which hard to predict, then the agent will stay and watch the sun moving. So we need to find the useful features in action chosen, this is the work of Network 2. It predict the action $a_t $ according to $s_t$ and $s_{t+1}$.
+
