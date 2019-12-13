@@ -1,4 +1,4 @@
-# Notes In Deep Reinforcement Learning 
+## Notes In Deep Reinforcement Learning 
 ---
 
 ### Concepts in Reinforcement Learning
@@ -20,6 +20,7 @@ The A3C method is the most popular model which combines policy-based method and 
 
 <div align=center><img src="assets/A3C.png" width=400></div>
 ### Policy-based Approach - Learn an Actor (Policy Gradient Method)
+
 This approach try to learn a policy(also called actor). It accepts the observation as input, and output an action. The policy(actor) can be any model. If you $use$ an Neural Network to as your actor, then you are doing Deep Reinforcement Learning.
 
 $$
