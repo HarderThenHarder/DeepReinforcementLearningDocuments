@@ -8,8 +8,6 @@
 
 #### 2. 介绍
 
-##### 2.1 论文结构
-
 整个论文分为三个部分：
 
 * **假设出一些需要`通讯`和`多智能体协同`的任务**
@@ -21,16 +19,15 @@
 该论文使用`中心式学习`-`去中心式执行`的方法，即训练过程中各单位之间可以进行无限制通讯，学习完成后最终应用时会受到通讯限制。论文中一共提出了两种approach：
 
  1-  Reinforced Inter-Agent Learning (RIAL)
-```
-用一个循环的Deep Q-Learning网络（RNN + DQN）来解决部分可观测问题，其中，RIAL又有2种不同的变种方法:
+
+>用一个循环的Deep Q-Learning网络（RNN + DQN）来解决部分可观测问题，其中，RIAL又有2种不同的变种方法:
 (a)  每一个agent单独学习一个属于自己的Neural Network，将其余agent看作是环境的一部分。
 (b)  只训练一个global的Neural Network，所有agent共享这个网络的参数。
-```
 
  2-  Differentiable Inter-Agent Learning (DIAL)
-```
-尽管在RIAL的第二种变种方法中，通过参数共享的方式模拟了agent之间的信息共享，但是却没有很好的模拟agent与agent之间"通讯"的过程。DIAL的设计思路中使得在训练过程中，不同agent之间可以传输真正的”梯度消息“，在原文中被称为"real-valued message"。
-```
+
+>尽管在RIAL的第二种变种方法中，通过参数共享的方式模拟了agent之间的信息共享，但是却没有很好的模拟agent与agent之间"通讯"的过程。DIAL的设计思路中使得在训练过程中，不同agent之间可以传输真正的”梯度消息“，在原文中被称为"real-valued message"。
+
 
 * **分析这些算法是怎样进行通讯协议的学习的**
 
@@ -156,5 +153,4 @@ C网络输出2个output：<br>
 下面是实验结果，其中**n**代表囚犯数。**-NS**代表**不使用参数共享**时的结果，即每个囚犯训练自身单独的网络。**NoComm**代表**不加入通信因素**的结果。
 
 <div align=center><img src="assets/Result.jpg"></div>
-
 值得注意的是（b）图中的RIAL-NS的方法效果还没有不加入通信协议时好，这充分说明了**要想让每一个agent独立学习一个属于自己的网络模型是相当困难的**。
