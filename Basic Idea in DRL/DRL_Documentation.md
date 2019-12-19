@@ -414,15 +414,15 @@ $$
 $$
 `note`: Here we use state value to replace the baseline b.
 
-We can infer the value of $Q^{\pi_\theta}(s_t, a_t)$ from $V^{\pi_\theta}(s_t)$ :
+We can infer the value of $Q^{\pi_\theta}(s_t, a_t)$ from $V^{\pi_\theta}(s_t)$:
 $$
-Q^{\pi}(s_t, a_t) \quad = \quad E[r_t + V^\pi(s_{t+1})] \quad \rightarrow \quad r_t + V^\pi(s_{t+1})
+Q^{\pi}(s_t, a_t) \quad = \quad E[r_t + \gamma V^\pi(s_{t+1})] \quad \rightarrow \quad r_t + \gamma V^\pi(s_{t+1})
 $$
 We should use the expect because $r_t$ is a random variable, but it's hard to calculate, so we take off the expect. Now the equation becomes:
 $$
-\bigtriangledown\overline{R(\theta)} = \frac{1}{N}\sum_{n=1}^N\sum_{t=1}^T{(r_t + V^{\pi_\theta}(s_{t+1}^n) - V^{\pi_\theta}(s_t^n))\bigtriangledown{logP_{\theta}(a_t^n|s_t^n)}}
+\bigtriangledown\overline{R(\theta)} = \frac{1}{N}\sum_{n=1}^N\sum_{t=1}^T{(r_t + \gamma V^{\pi_\theta}(s_{t+1}^n) - V^{\pi_\theta}(s_t^n))\bigtriangledown{logP_{\theta}(a_t^n|s_t^n)}}
 $$
-> $r_t + V^{\pi_\theta}(s_{t+1}^n) - V^{\pi_\theta}(s_t^n)$ could be express as **TD-Error**.
+> $r_t + \gamma V^{\pi_\theta}(s_{t+1}^n) - V^{\pi_\theta}(s_t^n)$ could be express as **TD-Error**.
 
 Algorithm flow of Advantage Actor-Critic method show as below:
 
