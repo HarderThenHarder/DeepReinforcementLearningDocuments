@@ -239,17 +239,17 @@ Fit the NN with $(S_a, G(a))$, try to minimize the difference between the NN out
 
 * Temporal-Difference approach
 
-MC approach is worked, but the problem is you must get the total reward in the end of one episode. It may be a very long way to reach the end state in some cases, Temporal-Difference approach could address this problem.
+MC approach is worked, but the problem is you must get the total reward in the end of one episode. It may be a very long way to reach the end state in some cases, Temporal-Difference approach could address this problem, picture shown below consider $\gamma = 1$.
 
 <img src="assets/TD.png">
 
 here is a trajectory {$..., s_t, a_t, r_t, s_{t+1}, ...$ }, there should be:
 
 $$
-V^\pi(s_t) = V^\pi(s_{t+1}) + r_t
+V^\pi(s_t) = \gamma V^\pi(s_{t+1}) + r_t
 $$
 
-so we can fit the NN by minimize the difference between $V^\pi(s_t) - V^\pi(s_{t+1})$ and $r_t$.
+so we can fit the NN by minimize the difference between $V^\pi(s_t) - \gamma V^\pi(s_{t+1})$ and $r_t$.
 
 Here is a tip in practice: we are training the same model $V^\pi$, so the two outputs $V_\pi(s_t)$ and $V_\pi(s_{t+1})$ are all generate from one parameter group $\theta$. When we update the $\theta$ after one iteration, both $V_\pi(s_t)$ and $V_\pi(s_{t+1})$ are changed in next iteration, which makes the model unstable.
 
@@ -259,7 +259,7 @@ The tip is: fix the parameter group $\theta'$ to generate the $V_\pi(S_{t+1})$, 
 
 * MC v.s. TD
   * Monte-Carlo has larger `variance`. This is caused by the randomness of $G(a)$, since $G(a)$ is the sum of all reward $r_t$, each $r_t$ is a random variable, the sum of these variable must have a larger variance. Playing N times of one game with the same policy, the reward set {$G(a), G(b), G(c), ...$} has a large variance.
-  * Temporal-Difference also has a problem, which is $V^\pi(s_{t+1})$ may estimate `incorrectly` (cause it's not like Monte-Carlo approach to cumulative the reward until the end of this episode), so even the $r_t$ is correct, the $V^\pi(s_t) - V^\pi(s_{t+1})$ may not correct.
+  * Temporal-Difference also has a problem, which is $V^\pi(s_{t+1})$ may estimate `incorrectly` (cause it's not like Monte-Carlo approach to cumulative the reward until the end of this episode), so even the $r_t$ is correct, the $V^\pi(s_t) - \gamma  V^\pi(s_{t+1})$ may not correct.
   
   In the practice, people prefer to use TD method.
   
@@ -422,6 +422,8 @@ We should use the expect because $r_t$ is a random variable, but it's hard to ca
 $$
 \bigtriangledown\overline{R(\theta)} = \frac{1}{N}\sum_{n=1}^N\sum_{t=1}^T{(r_t + V^{\pi_\theta}(s_{t+1}^n) - V^{\pi_\theta}(s_t^n))\bigtriangledown{logP_{\theta}(a_t^n|s_t^n)}}
 $$
+> $r_t + V^{\pi_\theta}(s_{t+1}^n) - V^{\pi_\theta}(s_t^n)$ could be express as **TD-Error**.
+
 Algorithm flow of Advantage Actor-Critic method show as below:
 
 <img src="assets/advanced_actor_critic.png">
