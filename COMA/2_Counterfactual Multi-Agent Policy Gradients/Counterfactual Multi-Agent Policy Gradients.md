@@ -70,14 +70,17 @@ $$
 
 **关于Actor-Critic**模型：
 
-AC模型中，actor是根据critic所求得的梯度来进行学习的。因为$R_t$是一个期望值，无法求得精确的值，因此需要用其他的表达式来近似替代$R_t$。替代$R_t$一共有两种方式：
+AC模型中，actor是根据critic所求得的梯度来进行学习的。因为$R_t$是一个期望值，无法求得精确的值，因此需要用其他的表达式来近似替代$R_t$：
 
-1. **优势函数法**：使用 $Q(s_t, u_t) - b(s_t)$ 来代替 $R_t$，其中 $b$ 为一个基准值，用于保证所有action的Q值有正有负，通常可以用 $V(s_t)$ 来代替 $b$ 值。也就是用 $Q^\pi(s_t, u_t) - V^\pi(s_t) = A(s_t, u_t)$ 来代替 $R_t$。
-2. **TD法**：使用 $r_t + \gamma V(s_{t+1}) - V(s_t)$ 来代替 $R_t$ 。
+> **优势函数法**：使用 $Q(s_t, u_t) - b(s_t)$ 来代替 $R_t$，其中 $b$ 为一个基准值，用于保证所有action的Q值有正有负，通常可以用 $V(s_t)$ 来代替 $b$ 值。也就是用 $Q^\pi(s_t, u_t) - V^\pi(s_t) = A(s_t, u_t)$ 来代替 $R_t$。
+
+为了避免直到整个Episode完成后才能获得一个Reward的问题，还可以使用TD-Error法来进行训练：
+
+> **TD-Error法**：使用 $r_t + \gamma V(s_{t+1}) - V(s_t)$ 来作为 $Loss$ 函数 ，并对该损失函数做梯度下降。<br>
 
 **训练中心评价网络critic**：
 
-在这篇论文中，作者训练了一个中心评价网络$f^c(·, \theta^c)$，网络参数为 $\theta^c$，使用一种稍微改变了下的TD法进行学习——$TD(\lambda)$ 将$n$ 步的reward值进行综合来得到一个平均值 $G_t^{(n)} = \sum_{l=1}^n\gamma^{l-1}r_{t+l} + \gamma^nf^c(·_{t+n}, \theta^c)$。使用梯度下降的方法来更新网络参数$\theta^c$，$L_t$表示$t$时刻的损失函数:
+在这篇论文中，作者训练了一个中心评价网络$f^c(·, \theta^c)$，网络参数为 $\theta^c$，使用一种变种的TD-Error法进行学习——$TD(\lambda)$： 将$n$ 步的reward值进行综合来得到一个平均值 $G_t^{(n)} = \sum_{l=1}^n\gamma^{l-1}r_{t+l} + \gamma^nf^c(·_{t+n}, \theta^c)$。使用梯度下降的方法来更新网络参数$\theta^c$，$L_t$表示$t$时刻的损失函数:
 $$
 L_t(\theta^c) = (y^{(\lambda)} - f^c(_{·t}, \theta^c)) ^ 2
 $$
@@ -104,7 +107,7 @@ $$
 IAC方法指每一个agent学习一个独立的actor-critic，在这篇论文中采用参数共享的方法，使得所有agent共用一个actor和一个critic。在学习的时候，critic只能根据agent自身的local observation进行估计值，并且也只能估计该agent的单个动作$u^a$的效用，而不是联合动作空间$\textbf{u}$的效用。<br>论文中对传统的IAC算法有两处改变:
 
 1. 在估计V值时，每个 agent 的 critic 估计的是$V(\tau^a)$，估计的是这个agent历史action-observation数据的效用值，而不是传统的当前状态的效用值$V(s_t)$。$V$评价网络基于$TD(\lambda)$方法进行梯度更新，见上面。
-2. 在估计Q值时，每个agent的critic估计的是$Q(\tau^a, u^a)$, 也是基于action-observation的历史数据对当前行为$u^a$进行效用估计。$Q$评价网络是通过梯度下降优势函数$A(\tau^a, u^a)$来进行学习的，其中优势函数的定义为：单个动作产生的Q值减去所有动作产生的Q值，即 $A(\tau^a, u^a) = Q(\tau^a, u^a) - V(\tau^a)$。其中$V(\tau^a)$定义为：在已知"动作-观测"历史数据下，所有动作产生的效用总和，即$V(\tau^a) = \sum_{u^a}\pi(u^a|\tau^a)Q(\tau^a, u^a)$。
+2. 在估计Q值时，每个agent的critic估计的是$Q(\tau^a, u^a)$, 也是基于action-observation的历史数据对当前行为$u^a$进行效用估计。$Q$评价网络利用优势函数$A(\tau^a, u^a)$来代替 $r_t^a$ 进行学习，其中优势函数的定义为：单个动作产生的Q值减去所有动作产生的Q值，即 $A(\tau^a, u^a) = Q(\tau^a, u^a) - V(\tau^a)$。其中$V(\tau^a)$定义为：在已知"动作-观测"历史数据下，所有动作产生的效用总和，即$V(\tau^a) = \sum_{u^a}\pi(u^a|\tau^a)Q(\tau^a, u^a)$。
 
 IAC的缺陷在于，训练时只能依据单个agent的局部观测和单个action的效用评定，这样很难学出一套好的协同策略。
 
