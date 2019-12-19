@@ -436,6 +436,15 @@ Algorithm flow of Advantage Actor-Critic method show as below:
 
 2. Use output entropy as regularization for $\pi(s)$, this could make the probability of each action more even so that the model can do more exploration.
 
+Here is the simple code of Actor-Critic implementation:
+
+<div align=center><img src="assets/AC_code.jpg" width=700></div>
+
+We can learn :
+
+1.  In one step, both Actor and Critic should be trained.
+2. Actor update its parameters with TD-Error which generated from Critic.
+
 #### Asynchronous Advantage Actor-Critic (A3C Method)
 
 A3C is designed to speed up A2C. It maintain one global Network and create N workers, each worker interact with different environment, calculate the gradient and update the global Network.
