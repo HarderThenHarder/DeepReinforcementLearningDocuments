@@ -70,4 +70,99 @@ Picture below shows the computation logic :
 That is not the end of LSTM, we need to add some extra data as input. LSTM use the output $y^t$ and the  memory $c_t$ as the input of next step $t+1$, so the entire structure of LSTM should look like:
 
  <div align=center><img src="assets/LSTM_compute2.png" width=700></div>
+##### GRU (Gated recurrent unit)
 
+A method based on LSTM, which delete 1 gate (only 2 gates used) but has the same performance as LSTM.
+
+#### How to train RNN?
+
+The method of RNN training is also Backpropagation, but exists slight difference: we need to sum the loss of **all steps**.
+
+ <div align=center><img src="assets/RNN_Loss.png"></div>
+##### Unstable in RNN training
+
+In RNN training, the loss values are often jump sharply, show as below picture:
+
+ <div align=center><img src="assets/RNN_problem.png" width=450></div>
+What is the reason of this strange problem? Visualize the loss value of $w_1$ and $w_2$, found there exists a sharply changing. When orange point jump from 2 to 3, it will get a big loss.
+
+ <div align=center><img src="assets/RNN_problem2.jpg" width=450></div>
+The resolution of this problem is **Clipping**: if the loss value is bigger than a *threshold*, then let the loss value equal to this *threshold*.<br>This unstable loss is the feature of RNN, but why? What on earth is the reason which causes this problem? Here is an easy example to show the effect of result $y_t$ by changing the $w$. 
+
+ <div align=center><img src="assets/RNN_problem_ex.png"></div>
+Assume only one neural in each network, weight is 1, no bias, $w$ is transform weight (parameters in last layer needs multiply $w$ then input into next layer).
+
+> $w=1 \quad \rightarrow \quad y_{1000}=1$<br>$w=1.01 \quad \rightarrow \quad y_{1000}\approx20000$<br>
+
+Even if $w$ changes slightly, the output of last layer $y_{1000}$ changes a lot. This because we multiply $w$ many times which means we magnify the effect of transform weight.
+
+> $w = 0.99 \quad \rightarrow \quad y_{1000} \approx0$<br>$w = 0.01 \quad \rightarrow \quad y_{1000} \approx 0$<br>
+
+Even if two $w$ are total different, the output of last layer is same.
+
+##### Use LSTM to solve problem —— handle gradient vanishing
+
+The difficulty of RNN is that we don't know how to choose a suitable learning rate: big $\eta$ need for plane surface but small $\eta$ for sharp changing area. LSTM could solve this problem by making those plane area more uneven so that you can safely assign a small $\eta$.
+
+> In traditional RNN, parameters in memory cell will be covered after each step which means it forget the history before. But in LSTM, parameters in memory cell not be covered, data in this step are added with history before, so the history could be remembered.  Further more, gradient won't be vanished if forget gate is not opened, so there is no gradient vanishing in LSTM.
+
+
+#### Implementation LSTM with keras
+
+To use keras, we need to understand following terms:
+
+* input_dim: dimension of input vector.
+* time_steps: length of Sequence.
+* output_dim = dimension of output. Notice this output is **not** the final output of entire Neural Network, it's just the output of LSTM Layers ( LSTM might be a part of one Neural Network, see as code below ).
+
+Say if we want to predict the "happy feeling" or "sad feeling" of two sentence, "I am lucky!" and "I feel bad!". Then the *time_steps* should be 3 ( the length of sentence is 3 ), and the *output_dim* should be 1 ( 0 expresses unhappy while 1 expresses happy ). Because of the different length of words ( 'I' has 1 character while 'lucky' has 5 characters ), we can't choose a fixed input dimension. The resolution of this problem is using **Embedding Layer** to map the different length words to a specific dimension.<br>
+
+##### LSTM for Constant Length Input problem
+
+Here is a simple example which use LSTM to predict the MNIST problem, key code block shown as below:
+
+```python
+input_dim = 28  # MNIST image's width
+time_steps = 28  # MNIST image's height
+output_dim = 28  # output dimension for LSTM
+model = Sequential()
+model.add(LSTM(units=ouput_dim, input_shape=(time_steps, input_dim))) # add LSTM Layer
+model.add(Dense(10, activation='softmax'))  # since there are 10 classes in MNIST
+```
+
+##### LSTM for Different Length Input problem
+
+Because of the different length between different sentences. We need to add a *Masking Layer* to solve the Length Problem. <br>First, we add 0 to make all samples have the same length, for example, here is a sample set:
+
+```python
+X = np.array([
+    [1, 3, 2], # sentence 1 - 3 words
+	[2],       # sentence 2 - 1 words
+    [3, 4]     # sentence 3 - 2 words
+])
+```
+
+we use inner function of keras to change the sample length:
+
+```python
+X = keras.preprocessing.sequence.pad_sequences(X, maxlen=3, padding='post')
+```
+
+Now the matrix X changes to:
+
+```python
+array([
+    [1, 3, 2], # sentence 1 - 3 words
+    [2, 0, 0], # sentence 2 - 3 words
+    [3, 4, 0]  # sentence 3 - 3 words
+])
+```
+
+Then, we add a *Mask Layer* to filter the 0 value which means these neural with 0 value won't be calculated in the feed-forward process.
+
+```python
+model = Sequential()
+model.add(Masking(mask_value=0, input_shape=(3, 3))) # add Masking Layer
+model.add(LSTM(units=ouput_dim, input_shape=(3, 3))) # add LSTM Layer
+model.add(Dense(10, activation='softmax')) 
+```
