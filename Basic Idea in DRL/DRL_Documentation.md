@@ -95,9 +95,11 @@ Since $\tau$ is the history of one episode, so:
 $$
 \begin{align*}
 P(\tau|\theta) &= P(s_1)P(a_1|s_1, \theta)P(r_1, s_2|s_1, a_1)P(a_2|s_2, \theta)... \\
-&= P(s_1)\prod_{t=1}^T{P(a_t|s_t, \theta)P(r_t, s_{t+1}|s_t, a_t)}logP(\tau|\theta) \\
-&= logP(s_1) + \sum_{t=1}^T{logP(a_t|s_t, \theta) + logP(r_t, s_{t+1}|s_t, a_t)}
-\end{align*}
+&= P(s_1)\prod_{t=1}^T{P(a_t|s_t, \theta)P(r_t, s_{t+1}|s_t, a_t)}
+\end{align*} 
+$$
+$$
+logP(\tau|\theta) = logP(s_1) + \sum_{t=1}^T{logP(a_t|s_t, \theta) + logP(r_t, s_{t+1}|s_t, a_t)}
 $$
 
 Ignore the terms which not related to $\theta$:
@@ -203,11 +205,18 @@ which the $KL(\theta, \theta')$ is the divergence of output action from policy $
 * In each iteration:
 
   * Using  $\theta^k$ to interact with the environment, and collect {${s_t, a_t}$} to calculate the $A^{\theta^k}(s_t, a_t)$
+  
 *  Update the $J_{PPO}^{\theta'}(\theta)$ **several** times:  $ J_{PPO}^{\theta^k}(\theta) = J^{\theta^k}(\theta) - \beta KL(\theta, \theta^k)$
   *  If $KL(\theta, \theta^k) > KL_{max}$, that means KL part takes too big importance of this equation, increase $\beta$
   *  If $KL(\theta, \theta^k) < KL_{min}$, that means KL part takes lower importance of this equation, decrease $\beta$
 
-  
+To avoid large gradient to make model unstable, we must avoid large $J^{\theta'}_{PPO}(\theta)$. So **clipping** is very important.
+$$
+min(r(\theta)\hat{A}_t, clip(r(\theta), 1-\varepsilon, 1+\varepsilon)\hat{A}_t)
+$$
+where $r(\theta)$is the rectify ratio $\frac{\pi_{\theta}(a|s)}{\pi_{{\theta}old}(a|s)}$, $\varepsilon$ is a hyperparameter.
+
+<br>
 
 ### Value-based Approach - Learn an Critic
 
@@ -439,7 +448,6 @@ Algorithm flow of Advantage Actor-Critic method show as below:
 Here is the simple code of Actor-Critic implementation:
 
 <div align=center><img src="assets/AC_code.jpg" width=700></div>
-
 We can learn :
 
 1.  In one step, both Actor and Critic should be trained.
